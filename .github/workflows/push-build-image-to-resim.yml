@@ -29,6 +29,7 @@ jobs:
           RESIM_CLIENT_ID: ${{ secrets.CLI_CLIENT_ID }}
           RESIM_CLIENT_SECRET: ${{ secrets.CLI_CLIENT_SECRET }}
         run: |
+            go install github.com/resim-ai/api-client/cmd/resim@latest
             ./resim/examples/sim_runner/build.sh
             docker tag sim_runner:latest 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
             docker push 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
