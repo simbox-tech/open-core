@@ -1,4 +1,4 @@
-# Creating a Sim Runner Container
+# Creating a Sim Runner Container - for fun!
 
 ## Introduction
 The contents of this folder are intended to demonstrate how to create a docker
