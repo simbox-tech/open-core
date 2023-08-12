@@ -32,5 +32,5 @@ jobs:
             ./resim/examples/sim_runner/build.sh
             docker tag sim_runner:latest 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
             docker push 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
-            BUILD_ID=$(resim build create --github --project_id "Simple Simons Simulated Pizza" --branch_id "main" --image "450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest")
+            BUILD_ID=$(resim build create --github --project_name "Simple Simons Simulated Pizza" --branch_name "main" --image "450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest")
             resim batch create --build_id $BUILD_ID --experience_ids "89a58bb7-c437-489b-8be7-411e306fee09"
