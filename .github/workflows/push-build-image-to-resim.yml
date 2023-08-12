@@ -28,6 +28,5 @@ jobs:
         run: |
             ./resim/examples/sim_runner/build.sh
             docker tag sim_runner:latest 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
-            # aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 450373242995.dkr.ecr.us-east-1.amazonaws.com
             docker push 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
             ./resim/examples/sim_runner/test_run.sh
