@@ -25,8 +25,13 @@ jobs:
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Build and push
+        env:
+          RESIM_CLIENT_ID: ${{ secrets.CLI_CLIENT_ID }}
+          RESIM_CLIENT_SECRET: ${{ secrets.CLI_CLIENT_SECRET }}
         run: |
             ./resim/examples/sim_runner/build.sh
             docker tag sim_runner:latest 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
             docker push 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
             ./resim/examples/sim_runner/test_run.sh
+            BUILD_ID=$(resim build create --gitbub --project_id "Simple Simons Simulated Pizza" --branch_id "main" --image "450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest")
+            resim batch create --build_id $BUILD_ID --experience_ids "89a58bb7-c437-489b-8be7-411e306fee09"
