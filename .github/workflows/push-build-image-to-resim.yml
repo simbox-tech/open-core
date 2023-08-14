@@ -38,7 +38,7 @@ jobs:
             # Install the latest version of the ReSim CLI
             go install github.com/resim-ai/api-client/cmd/resim@latest
             # Register our new image with ReSim as a build
-            resim build create --description "A quadcopter simulation" --version "$GITHUB_SHA" --project_name "${GITHUB_REPOSITORY#*/}" --branch_name "$GITHUB_REF_NAME" --image "$IMAGE_URI"
+            resim build create --description "A quadcopter simulation" --version "$GITHUB_SHA" --project_name "${GITHUB_REPOSITORY#*/}" --auto_create_branch --branch_name "$GITHUB_REF_NAME" --image "$IMAGE_URI"
 
       - name: Trigger batch
         env:
