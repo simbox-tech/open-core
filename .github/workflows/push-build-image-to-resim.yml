@@ -35,13 +35,13 @@ jobs:
             # This helps us map built images to code and back
             COMMIT_SHORT_SHA=$(git rev-parse --short "$GITHUB_SHA")
             # Create a variable containing our image URI. Make sure you update these placeholder values
-            IMAGE_URI=450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests::$COMMIT_SHORT_SHA
+            IMAGE_URI=450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:${GITHUB_SHA::7}
             docker tag sim_runner:latest $IMAGE_URI
             docker push $IMAGE_URI
             # Install the latest version of the ReSim CLI
             go install github.com/resim-ai/api-client/cmd/resim@latest
             # Register our new image with ReSim as a build
-            resim build create --github --description "A quadcopter simulation" --version "COMMIT_SHORT_SHA" --project_name "${GITHUB_REPOSITORY#*/}" --branch_name "$GITHUB_REF_NAME" --image "$IMAGE_URI" >> $GITHUB_ENV
+            resim build create --description "A quadcopter simulation" --version "${GITHUB_SHA::7}" --project_name "${GITHUB_REPOSITORY#*/}" --branch_name "$GITHUB_REF_NAME" --image "$IMAGE_URI"
 
       - name: Trigger batch
         env:
