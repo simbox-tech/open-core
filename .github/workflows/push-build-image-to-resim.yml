@@ -26,12 +26,26 @@ jobs:
 
       - name: Build and push
         env:
-          RESIM_CLIENT_ID: ${{ secrets.CLI_CLIENT_ID }}
-          RESIM_CLIENT_SECRET: ${{ secrets.CLI_CLIENT_SECRET }}
+          RESIM_CLIENT_ID: ${{ secrets.RESIM_CLIENT_ID }}
+          RESIM_CLIENT_SECRET: ${{ secrets.RESIM_CLIENT_SECRET }}
         run: |
-            go install github.com/resim-ai/api-client/cmd/resim@latest
+            # This build command is an example which builds a Docker image and an application (using Bazel) - replace it with the build command for your application and image.
             ./resim/examples/sim_runner/build.sh
-            docker tag sim_runner:latest 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
-            docker push 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest
-            BUILD_ID=$(resim build create --github --client_id ${{ secrets.CLI_CLIENT_ID }} --client_secret ${{ secrets.CLI_CLIENT_SECRET }} --description "A fine Georgian mansion with a view over the Thames" --version "SeCr3t-cO0d3" --project_name "Simple Simons Simulated Pizza" --branch_name "main" --image "450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:github-latest" | cut -d'=' -f2)
-            resim batch create --client_id ${{ secrets.CLI_CLIENT_ID }} --client_secret ${{ secrets.CLI_CLIENT_SECRET }} --build_id $BUILD_ID --experience_ids "89a58bb7-c437-489b-8be7-411e306fee09"
+            # Create a variable containing the short form of the commit SHA that triggered this run
+            # This helps us map built images to code and back
+            COMMIT_SHORT_SHA=$(git rev-parse --short "$GITHUB_SHA")
+            # Create a variable containing our image URI. Make sure you update these placeholder values
+            IMAGE_URI=450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests::$COMMIT_SHORT_SHA
+            docker tag sim_runner:latest $IMAGE_URI
+            docker push $IMAGE_URI
+            # Install the latest version of the ReSim CLI
+            go install github.com/resim-ai/api-client/cmd/resim@latest
+            # Register our new image with ReSim as a build
+            resim build create --github --description "A quadcopter simulation" --version "COMMIT_SHORT_SHA" --project_name "${GITHUB_REPOSITORY#*/}" --branch_name "$GITHUB_REF_NAME" --image "$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Trigger batch
+        env:
+          RESIM_CLIENT_ID: ${{ secrets.RESIM_CLIENT_ID }}
+          RESIM_CLIENT_SECRET: ${{ secrets.RESIM_CLIENT_SECRET }}
+        run: |
+            resim batch create --build_id $build_id --experience_ids "89a58bb7-c437-489b-8be7-411e306fee09"
