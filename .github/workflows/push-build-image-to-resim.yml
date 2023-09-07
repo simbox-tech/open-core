@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'ben/test-pr-comment'
   workflow_dispatch:
 
 jobs:
