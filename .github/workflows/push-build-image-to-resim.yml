@@ -59,7 +59,6 @@ jobs:
         run: |
           # Install the latest version of the ReSim CLI
           go install github.com/resim-ai/api-client/cmd/resim@latest
-          which resim
           echo $PATH
           export PATH=${PATH}:`go env GOPATH`/bin
           echo $PATH
