@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
   pull_request:
 
+permissions:
+  issues: write
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -75,5 +78,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "[View results in app.resim.ai](https://app.resim.ai/results/${batch_id})"
+              body: `[View results in app.resim.ai](https://app.resim.ai/results/${process.env.batch_id})`
             }) 
