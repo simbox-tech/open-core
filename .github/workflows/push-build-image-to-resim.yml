@@ -49,15 +49,18 @@ jobs:
 
   run:
     runs-on: ubuntu-22.04
+    # needs: build
     steps:
       - name: Register build, run batch
         env:
           RESIM_CLIENT_ID: ${{ secrets.RESIM_CLIENT_ID }}
           RESIM_CLIENT_SECRET: ${{ secrets.RESIM_CLIENT_SECRET }}
-          IMAGE_URI: ${{ needs.build.outputs.image_uri }}
+          IMAGE_URI: 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:7473c8aa417403bc5f5aa78afb92f6653377a3fd
         run: |
           # Install the latest version of the ReSim CLI
           go install github.com/resim-ai/api-client/cmd/resim@latest
+          echo $PATH
+          export PATH=${PATH}:`go env GOPATH`/bin
           # Register our new image with ReSim as a build
           build_id=$(resim build create --description "A quadcopter simulation" --version "$GITHUB_SHA" --project-name "${GITHUB_REPOSITORY#*/}" --auto-create-branch --branch-name "$GITHUB_REF_NAME" --image "$IMAGE_URI" --github | tr -d 'build_id=')
           resim batch create --build-id $build_id --experience-ids "89a58bb7-c437-489b-8be7-411e306fee09" --github >> "$GITHUB_ENV"
