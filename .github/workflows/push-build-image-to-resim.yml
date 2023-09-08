@@ -4,18 +4,33 @@ on:
     branches:
       - 'main'
   workflow_dispatch:
+  pull_request:
+
+permissions:
+  pull-requests: write
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     container:
       image: resimai/core:latest 
+    outputs:
+      image_uri: ${{ steps.build.outputs.image_uri }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+
+      - name: Cache Bazel
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/bazel
+          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
 
       - name: Log in to ECR
         uses: docker/login-action@v2
@@ -25,9 +40,7 @@ jobs:
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Build and push
-        env:
-          RESIM_CLIENT_ID: ${{ secrets.RESIM_CLIENT_ID }}
-          RESIM_CLIENT_SECRET: ${{ secrets.RESIM_CLIENT_SECRET }}
+        id: build
         run: |
             # This build command is an example which builds a Docker image and an application (using Bazel) - replace it with the build command for your application and image.
             ./resim/examples/sim_runner/build.sh
@@ -35,14 +48,35 @@ jobs:
             IMAGE_URI=450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:$GITHUB_SHA
             docker tag sim_runner:latest $IMAGE_URI
             docker push $IMAGE_URI
-            # Install the latest version of the ReSim CLI
-            go install github.com/resim-ai/api-client/cmd/resim@latest
-            # Register our new image with ReSim as a build
-            resim build create --description "A quadcopter simulation" --version "$GITHUB_SHA" --project_name "${GITHUB_REPOSITORY#*/}" --auto_create_branch --branch_name "$GITHUB_REF_NAME" --image "$IMAGE_URI"
+            echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
 
-      - name: Trigger batch
+  run:
+    runs-on: ubuntu-22.04
+    # needs: build
+    steps:
+      - name: Register build, run batch
         env:
           RESIM_CLIENT_ID: ${{ secrets.RESIM_CLIENT_ID }}
           RESIM_CLIENT_SECRET: ${{ secrets.RESIM_CLIENT_SECRET }}
+          IMAGE_URI: 450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:7473c8aa417403bc5f5aa78afb92f6653377a3fd
         run: |
-            resim batch create --build_id $build_id --experience_ids "89a58bb7-c437-489b-8be7-411e306fee09"
+          # Install the latest version of the ReSim CLI
+          go install github.com/resim-ai/api-client/cmd/resim@latest
+          echo $PATH
+          export PATH=${PATH}:`go env GOPATH`/bin
+          echo $PATH
+          # Register our new image with ReSim as a build
+          build_id=$(resim build create --description "A quadcopter simulation" --version "$GITHUB_SHA" --project-name "${GITHUB_REPOSITORY#*/}" --auto-create-branch --branch-name "$GITHUB_REF_NAME" --image "$IMAGE_URI" --github)
+          echo $build_id
+          resim batch create --build-id ${build_id#build_id=} --experience-ids "89a58bb7-c437-489b-8be7-411e306fee09" --github >> "$GITHUB_ENV"
+      - name: Comment on issue/PR
+        uses: actions/github-script@v6
+        with:
+          # to make a general non-review comment on a PR, treat it like an issue
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `[View results in app.resim.ai](https://app.resim.ai/results/${process.env.batch_id})`
+            }) 
