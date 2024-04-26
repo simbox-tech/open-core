@@ -1,5 +1,6 @@
 name: Build & Push Build Image To ReSim
 on:
+  pull_request:
   push:
     branches:
       - 'main'
