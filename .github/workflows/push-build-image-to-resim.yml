@@ -57,5 +57,6 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
+              avatar_url: "https://fonts.gstatic.com/s/e/notoemoji/latest/1f603/512.gif",
               body: "Your ReSim tests have launched :rocket:"
             }) 
