@@ -61,6 +61,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              avatar_url: "https://resim-public-assets.s3.amazonaws.com/github-resim-logo.svg",
               body: "Your ReSim tests have launched :rocket:"
             }) 
