@@ -1,9 +1,12 @@
 name: Build & Push Build Image To ReSim
 on:
+  pull_request:
   push:
     branches:
       - 'main'
   workflow_dispatch:
+
+permissions: write-all
 
 jobs:
   build:
@@ -30,19 +33,34 @@ jobs:
           RESIM_CLIENT_SECRET: ${{ secrets.RESIM_CLIENT_SECRET }}
         run: |
             # This build command is an example which builds a Docker image and an application (using Bazel) - replace it with the build command for your application and image.
-            ./resim/examples/sim_runner/build.sh
+            #./resim/examples/sim_runner/build.sh
             # Create a variable containing our image URI. Make sure you update these placeholder values
-            IMAGE_URI=450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:$GITHUB_SHA
-            docker tag sim_runner:latest $IMAGE_URI
-            docker push $IMAGE_URI
+            #IMAGE_URI=450373242995.dkr.ecr.us-east-1.amazonaws.com/simbox-tests:$GITHUB_SHA
+            #docker tag sim_runner:latest $IMAGE_URI
+            #docker push $IMAGE_URI
             # Install the latest version of the ReSim CLI
-            go install github.com/resim-ai/api-client/cmd/resim@latest
+            #go install github.com/resim-ai/api-client/cmd/resim@latest
             # Register our new image with ReSim as a build
-            resim build create --description "A quadcopter simulation" --version "$GITHUB_SHA" --project_name "${GITHUB_REPOSITORY#*/}" --auto_create_branch --branch_name "$GITHUB_REF_NAME" --image "$IMAGE_URI"
+            #resim build create --description "A quadcopter simulation" --version "$GITHUB_SHA" --project "${GITHUB_REPOSITORY#*/}" --system "perception" --branch "$GITHUB_REF_NAME" --image "$IMAGE_URI"
 
       - name: Trigger batch
         env:
           RESIM_CLIENT_ID: ${{ secrets.RESIM_CLIENT_ID }}
           RESIM_CLIENT_SECRET: ${{ secrets.RESIM_CLIENT_SECRET }}
         run: |
-            resim batch create --build_id $build_id --experience_ids "89a58bb7-c437-489b-8be7-411e306fee09"
+            resim batches create --project open-core --build-id 7ba5841b-f73f-4276-bea5-7e79253f4545 --metrics-build-id 5c2fbd48-0a08-4ee4-ba58-1b92f5d8ced9 --experience-tags perception
+            #resim batch create --build_id $build_id --experience_ids "89a58bb7-c437-489b-8be7-411e306fee09"
+      - name: Comment on PR
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "Your [ReSim tests](https://app.resim.ai/projects/761ff937-6bd9-499c-b737-ea2fdadd1deb/batches) have launched :rocket: ",
+              user: {     
+                avatar_url: "https://resim-public-assets.s3.amazonaws.com/github-resim-logo.svg",
+              }
+            }) 
